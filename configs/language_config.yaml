@@ -1,0 +1,11 @@
+datasets:
+  - "wikitext2"
+  - "ptb"
+  # - "shakespeare"
+
+data_root: data/language_data
+output_csv: weights/language/results_language.csv
+max_epochs: 20 #For shakespeare, use 10 epochs
+seed: 100
+checkpoint_dir: weights/language
+checkpoint_epochs: []

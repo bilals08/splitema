@@ -1,0 +1,22 @@
+data_root: data/proteomicsdata/preprocessed_Massive_KB_v1
+output_dir: weights/proteomics
+seed: 100
+
+d_model: 256
+n_head: 8
+n_layer: 4
+batch_size: 256
+lr: 3.0e-4
+weight_decay: 0.01
+warmup_steps: 100
+train_steps: 10000
+eval_batches: 32
+temperature: 0.1
+
+num_workers: 8
+persistent_workers: false
+prefetch_factor: null
+# Set to 0-5 to run a single model.
+model_index: null
+max_concurrent_models: 3
+epochs: 20

@@ -1,0 +1,37 @@
+import re
+
+# Tokenizes N-terminal mods, modified residues, and plain amino acids.
+_TOK_RE = re.compile(r'\[[^\]]+\]-|[A-Z]\[[^\]]+\]|[A-Z]')
+
+# Maps bracket notation to lowercase modification codes; unknown supported inputs strip to "".
+_BRACKET_MOD_MAP: dict[str, str] = {
+    "[Carbamidomethyl]": "c",
+    "[Oxidation]":       "o",
+    "[Deamidated]":      "d",
+    "[Acetyl]-":         "a",
+    "[Carbamyl]-":       "k",
+    "[Ammonia-loss]-":   "q",
+    "[+25.980265]-":     "",
+}
+
+
+def bracket_to_lowerletter(seq: str) -> str:
+    tokens = _TOK_RE.findall(seq)
+    result = []
+    for tok in tokens:
+        if tok.startswith("["):
+            result.append(_BRACKET_MOD_MAP.get(tok, ""))
+        elif "[" in tok:
+            aa     = tok[0]
+            bracket = tok[1:]
+            result.append(aa + _BRACKET_MOD_MAP.get(bracket, ""))
+        else:
+            result.append(tok)
+    return "".join(result)
+
+
+def peptide_length(seq: str) -> int:
+    tokens = _TOK_RE.findall(seq)
+    if not tokens or "".join(tokens) != seq:
+        return 0
+    return len(tokens)
