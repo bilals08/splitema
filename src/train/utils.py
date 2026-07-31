@@ -9,6 +9,7 @@ from ..logger import log
 _AUTOCAST_DTYPE = torch.bfloat16
 
 
+# Seed Python, NumPy, and Torch for repeatable experiments.
 def set_seed(seed: int, deterministic: bool = True):
     random.seed(seed)
     np.random.seed(seed)
@@ -21,6 +22,7 @@ def set_seed(seed: int, deterministic: bool = True):
         torch.use_deterministic_algorithms(True, warn_only=True)
 
 
+# Create an autocast context for the current compute device.
 def _autocast(dev):
     return torch.autocast(
         device_type="cuda" if str(dev).startswith("cuda") else "cpu",
@@ -28,10 +30,12 @@ def _autocast(dev):
     )
 
 
+# Convert a display name into a filesystem-safe identifier.
 def safe_name(name: str) -> str:
     return "".join(c if c.isalnum() or c in "_-" else "_" for c in name)
 
 
+# Build a warmup-plus-cosine learning-rate schedule.
 def make_cosine_lr_lambda(warmup_steps: int, total_steps: int):
     def _lr_lambda(s):
         if s < warmup_steps:
@@ -41,6 +45,7 @@ def make_cosine_lr_lambda(warmup_steps: int, total_steps: int):
     return _lr_lambda
 
 
+# Sample text from a trained causal language model.
 def generate(model, tokenizer, prompt, length=120, temperature=0.8, block_size=128):
     model.eval()
     idx = torch.tensor(
@@ -54,6 +59,7 @@ def generate(model, tokenizer, prompt, length=120, temperature=0.8, block_size=1
     return tokenizer.decode(idx[0].tolist())
 
 
+# Log module-level weight and gradient statistics for debugging training.
 def _log_weight_stats(model, step):
     log.debug(f"weight stats  step={step}")
     for name, module in model.named_children():

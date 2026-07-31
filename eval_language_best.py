@@ -12,17 +12,20 @@ import src
 from src.train.utils import safe_name
 
 
+# Load a YAML experiment configuration.
 def _load_config(path: str):
     with open(path) as f:
         return yaml.safe_load(f)
 
 
+# Rebuild the tokenizer expected by a language-model checkpoint.
 def _build_tokenizer(ds_name: str, train_text: str):
     if ds_name == "shakespeare":
         return src.CharTokenizer(train_text)
     return src.build_bpe_tokenizer(train_text)
 
 
+# Compute mean cross-entropy for a saved language model.
 def _eval_split(model, batch_fn, vocab_size: int, seed_base: int, n_batches: int):
     model.eval()
     losses = []
@@ -34,6 +37,7 @@ def _eval_split(model, batch_fn, vocab_size: int, seed_base: int, n_batches: int
     return sum(losses) / len(losses)
 
 
+# Validate that checkpoint metadata matches the current evaluation setup.
 def _check_checkpoint_config(checkpoint: dict, expected: dict, checkpoint_path: Path):
     actual = checkpoint["config"]
     mismatches = [
@@ -48,6 +52,7 @@ def _check_checkpoint_config(checkpoint: dict, expected: dict, checkpoint_path: 
         raise ValueError(f"{checkpoint_path} does not match current config ({details})")
 
 
+# Evaluate each best language checkpoint and optionally write a CSV report.
 def evaluate_best_checkpoints(config_path: str, output_csv: str | None, n_batches: int):
     c = _load_config(config_path)
     datasets = c["datasets"]
@@ -140,6 +145,7 @@ def evaluate_best_checkpoints(config_path: str, output_csv: str | None, n_batche
     return rows
 
 
+# Parse CLI arguments and run best-checkpoint evaluation.
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)

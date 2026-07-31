@@ -12,6 +12,7 @@ from ..logger import log
 from .peptide import bracket_to_lowerletter, peptide_length
 
 
+# HDF5-backed spectrum dataset with peptide-length filtering.
 class ProteomicsDataset(Dataset):
     def __init__(self, h5_path: str | Path):
         self.path  = str(h5_path)
@@ -44,6 +45,7 @@ class ProteomicsDataset(Dataset):
         }
 
 
+# Decode HDF5 sequence values into Python strings.
 def _decode_sequence(seq) -> str:
     if isinstance(seq, (bytes, np.bytes_)):
         return seq.decode()
@@ -54,6 +56,7 @@ def _decode_sequence(seq) -> str:
     return str(seq)
 
 
+# Build Massive-KB train, validation, and test datasets from an HDF5 directory.
 def build_proteomics_datasets(data_root: str | Path):
     root = Path(data_root)
 
@@ -89,6 +92,7 @@ def build_proteomics_datasets(data_root: str | Path):
     return train_ds, val_ds, test_ds
 
 
+# Quantize m/z and intensity peaks into fixed-size token triples.
 def tokenize_spectrum(peaks: torch.Tensor, precursor_neutral_mass: float = 0.0) -> tuple[torch.Tensor, int]:
     peaks = peaks.float()
     valid = peaks[(peaks[:, 0] > 0) | (peaks[:, 1] > 0)]
@@ -118,18 +122,21 @@ def tokenize_spectrum(peaks: torch.Tensor, precursor_neutral_mass: float = 0.0) 
     return tokens, n
 
 
+# Convert a spectrum peak list into a float tensor.
 def _peaks_to_tensor(spectrum) -> torch.Tensor:
     if not spectrum:
         return torch.zeros(0, 2)
     return torch.tensor([[mz, i] for mz, i in spectrum], dtype=torch.float32)
 
 
+# Generate a theoretical spectrum and unwrap the returned peak list.
 def _gen_spectrum(sequence, charge, meta):
     result = SpectrumTheoreticalProcessor.generate_theoretical_spectrum(
         sequence, meta=meta, maxcharge=charge)
     return result[0] if isinstance(result, tuple) else []
 
 
+# Generate tokenized positive and decoy theoretical spectra for a peptide.
 def sequence_to_spectra(sequence: str, charge: int) -> tuple[torch.Tensor, int, torch.Tensor, int]:
     charge  = max(1, int(charge))
     meta    = {"charge": charge}
@@ -144,6 +151,7 @@ def sequence_to_spectra(sequence: str, charge: int) -> tuple[torch.Tensor, int, 
 _collate_logged = False
 
 
+# Collate experimental spectra with matching theoretical positives and decoys.
 def collate_contrastive(batch):
     global _collate_logged
     exp_tokens, theo_tokens, dec_tokens = [], [], []
@@ -187,6 +195,7 @@ def collate_contrastive(batch):
     )
 
 
+# Build a contrastive DataLoader with optional deterministic worker seeding.
 def make_contrastive_loader(dataset, batch_size, shuffle, num_workers=0,
                              persistent_workers=False, drop_last=False, seed=None,
                              prefetch_factor=None):

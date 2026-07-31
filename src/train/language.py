@@ -8,6 +8,7 @@ from ..models import LMTransformer
 from .utils import _log_weight_stats, generate, safe_name, set_seed
 
 
+# Train one language-model attention variant and report validation/test metrics.
 def train_and_eval_language(
     name,
     attention_cls,

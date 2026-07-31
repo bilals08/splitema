@@ -1,5 +1,6 @@
 from .constants import MOD_MASS_TO_CODE
 
+# Utilities for parsing modified peptides and generating decoy sequences.
 class SequenceProcessor:
     @staticmethod
     def get_decoy(pep):

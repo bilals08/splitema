@@ -16,6 +16,7 @@ MODELS = [
 ]
 
 
+# Run language-model experiments across configured datasets and attention variants.
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--config", required=True)

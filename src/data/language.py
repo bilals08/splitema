@@ -9,6 +9,7 @@ from tokenizers.trainers import BpeTrainer
 from ..config import device
 
 
+# Character-level tokenizer used for Tiny Shakespeare.
 class CharTokenizer:
     def __init__(self, text):
         chars = ["[UNK]"] + sorted(set(text))
@@ -26,6 +27,7 @@ class CharTokenizer:
         return self.vocab_size
 
 
+# Train a whitespace-pretokenized BPE tokenizer from a text corpus.
 def build_bpe_tokenizer(text, vocab_size=5000):
     tok = Tokenizer(BPE())
     tok.pre_tokenizer = Whitespace()
@@ -39,6 +41,7 @@ _TEXT_FIELDS = {
 }
 
 
+# Load a saved language dataset and return train, validation, and test text.
 def load_text(choice, data_root="data/language_data"):
     path = Path(data_root) / choice
     if not path.exists():
@@ -55,6 +58,7 @@ def load_text(choice, data_root="data/language_data"):
     return join("train"), join("validation"), join("test"), desc
 
 
+# Create a reproducible batch sampler for next-token language modeling.
 def make_get_batch(data, block_size, batch_size):
     def get_batch(seed=None):
         if seed is not None:

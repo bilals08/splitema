@@ -17,6 +17,7 @@ MODELS = [
 ]
 
 
+# Yield fixed-size batches of model specs for memory-limited training.
 def _chunks(items, size):
     if size < 1:
         raise ValueError(f"max_concurrent_models must be >= 1, got {size}")
@@ -24,6 +25,7 @@ def _chunks(items, size):
         yield items[start : start + size]
 
 
+# Run proteomics contrastive experiments across configured attention variants.
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--config", required=True)

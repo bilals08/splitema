@@ -3,6 +3,7 @@ import torch.nn as nn
 from ..attention import _slow_fast_groups
 
 
+# Transformer decoder block for causal language modeling.
 class Block(nn.Module):
     def __init__(self, d_model, n_head, attention_cls, **kw):
         super().__init__()
@@ -23,6 +24,7 @@ class Block(nn.Module):
             self.attn.update_ema()
 
 
+# Causal transformer language model with pluggable attention.
 class LMTransformer(nn.Module):
     def __init__(self, vocab_size, d_model, n_head, n_layer, block_size, attention_cls, **kw):
         super().__init__()

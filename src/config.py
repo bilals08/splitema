@@ -9,7 +9,6 @@ MIN_PEPTIDE_LEN = 7
 MAX_PEPTIDE_LEN = 50
 PEAK_MIN_MZ = 10.0
 
-# Peak tokens are encoded as [whole m/z, fractional m/z, intensity].
 MZ_MAX      = 2500
 VOCAB_WHOLE = MZ_MAX + 1
 VOCAB_FRAC  = 1001

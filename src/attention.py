@@ -6,6 +6,7 @@ from transformers import LongformerConfig
 from transformers.models.longformer.modeling_longformer import LongformerSelfAttention
 
 
+# Build an additive attention mask from a boolean padding mask.
 def _attn_mask(padding_mask, dtype):
     if padding_mask is None:
         return None
@@ -13,12 +14,14 @@ def _attn_mask(padding_mask, dtype):
     return torch.zeros_like(pad, dtype=dtype).masked_fill(~pad, float("-inf"))
 
 
+# Return the mask format expected by scaled dot-product attention.
 def _sdpa_mask(padding_mask, dtype, causal):
     if causal:
         return None
     return _attn_mask(padding_mask, dtype)
 
 
+# Split parameters into standard and slow-learning optimizer groups.
 def _slow_fast_groups(model, base_lr):
     slow_ids, slow, scale = set(), [], None
     for m in model.modules():
@@ -34,6 +37,7 @@ def _slow_fast_groups(model, base_lr):
     return [{"params": fast, "lr": base_lr}, {"params": slow, "lr": base_lr * scale}]
 
 
+# Standard multi-head scaled dot-product attention adapter.
 class VanillaAttention(nn.Module):
     def __init__(self, d_model, n_head):
         super().__init__()
@@ -57,6 +61,7 @@ class VanillaAttention(nn.Module):
     def update_ema(self): pass
 
 
+# Attention variant that splits heads between trainable and EMA key/value paths.
 class SplitEMAAttention(nn.Module):
     EMA_DECAY = 0.99
 
@@ -73,7 +78,6 @@ class SplitEMAAttention(nn.Module):
         self.q_grad = nn.Linear(d_model, gw)
         self.k_grad = nn.Linear(d_model, gw)
         self.v_grad = nn.Linear(d_model, gw)
-        # Reuse grad Q for the EMA path.
         self.k_ema  = nn.Linear(d_model, gw)
         self.v_ema  = nn.Linear(d_model, gw)
         for p in (list(self.k_ema.parameters()) +
@@ -114,6 +118,7 @@ class SplitEMAAttention(nn.Module):
         return self.o_proj(torch.cat([grad_out, ema_out], dim=-1)), aux
 
 
+# Grouped-query attention adapter that shares key/value heads across query heads.
 class GroupQueryAttention(nn.Module):
     def __init__(self, d_model, n_head, group_size=2):
         super().__init__()
@@ -140,6 +145,7 @@ class GroupQueryAttention(nn.Module):
     def update_ema(self): pass
 
 
+# Longformer self-attention adapter for local-window non-causal encoding.
 class LongformerAttention(nn.Module):
     def __init__(self, d_model, n_head, attention_window=64):
         super().__init__()
@@ -191,6 +197,7 @@ class LongformerAttention(nn.Module):
     def update_ema(self): pass
 
 
+# Linformer self-attention adapter for low-rank sequence projection.
 class LinformerAttention(nn.Module):
     def __init__(self, d_model, n_head, seq_len=1024, k=256, one_kv_head=False, share_kv=False):
         super().__init__()

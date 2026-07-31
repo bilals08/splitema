@@ -1,6 +1,7 @@
 from .constants import AA_MONO_MASSES, PROTON_MASS, WATER_MASS
 from .sequence import SequenceProcessor
 
+# Generates simple theoretical fragment spectra from modified peptide sequences.
 class SpectrumTheoreticalProcessor:
     @staticmethod
     def _fragment_mz(peptide, ion_type, charge, modifications):

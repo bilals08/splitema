@@ -19,6 +19,7 @@ os.environ["MPLBACKEND"] = "Agg"
 os.environ["XDG_CACHE_HOME"] = str(_CACHE_ROOT / "xdg")
 
 
+# Convert YAML values into a proteomics training/evaluation config.
 def _config_to_proteomics_config(c: dict) -> src.ProteomicsConfig:
     return src.ProteomicsConfig(
         d_model=c["d_model"],
@@ -34,6 +35,7 @@ def _config_to_proteomics_config(c: dict) -> src.ProteomicsConfig:
     )
 
 
+# Resolve and validate the Massive-KB test HDF5 path.
 def _resolve_massivekb_test_file(test_h5: str) -> Path:
     path = Path(test_h5)
     if not path.exists():
@@ -41,11 +43,13 @@ def _resolve_massivekb_test_file(test_h5: str) -> Path:
     return path
 
 
+# Count raw sequence entries in an HDF5 dataset file.
 def _h5_sequence_count(path: Path) -> int:
     with h5py.File(path, "r") as f:
         return len(f["sequence"])
 
 
+# Resolve a saved model checkpoint for the requested epoch.
 def _resolve_checkpoint(
     checkpoint_dir: Path,
     model_name: str,
@@ -57,6 +61,7 @@ def _resolve_checkpoint(
     return path
 
 
+# Rebuild a spectrum model and load checkpoint weights for evaluation.
 def _load_model(name: str, attn_cls, attn_kwargs: dict, cfg: src.ProteomicsConfig, checkpoint: Path):
     model = src.SpectrumEmbeddingTransformer(
         attn_cls, cfg.d_model, cfg.n_head, cfg.n_layer, attn_kwargs
@@ -69,6 +74,7 @@ def _load_model(name: str, attn_cls, attn_kwargs: dict, cfg: src.ProteomicsConfi
     return model, {"name": name, "trainable": trainable, "total": total}
 
 
+# Compute bidirectional InfoNCE loss for experimental/theoretical embeddings.
 def _infonce(ee: torch.Tensor, te: torch.Tensor, de: torch.Tensor, temperature: float) -> torch.Tensor:
     labels = torch.arange(ee.size(0), device=ee.device)
     loss_fwd = F.cross_entropy(ee @ torch.cat([te, de], dim=0).T / temperature, labels)
@@ -76,6 +82,7 @@ def _infonce(ee: torch.Tensor, te: torch.Tensor, de: torch.Tensor, temperature: 
     return 0.5 * (loss_fwd + loss_bwd)
 
 
+# Evaluate contrastive loss plus top-1 and top-5 retrieval accuracy.
 def _evaluate(model, loader, temperature: float, eval_batches: int, desc: str) -> dict:
     dev = next(model.parameters()).device
     losses = []
@@ -120,6 +127,7 @@ def _evaluate(model, loader, temperature: float, eval_batches: int, desc: str) -
     }
 
 
+# Write evaluation rows to CSV and optional JSON files.
 def _write_outputs(rows: list[dict], output_csv: Path, output_json: Path | None):
     output_csv.parent.mkdir(parents=True, exist_ok=True)
     fields = [
@@ -140,6 +148,7 @@ def _write_outputs(rows: list[dict], output_csv: Path, output_json: Path | None)
         print(f"saved json: {output_json}")
 
 
+# Parse CLI arguments and evaluate selected proteomics checkpoints.
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)

@@ -6,6 +6,7 @@ from ..config import MAX_PEAKS, VOCAB_WHOLE, VOCAB_FRAC, VOCAB_INT
 from ..logger import log
 
 
+# Embeds quantized spectrum peak triples into model vectors.
 class PeakTokenEmbedding(nn.Module):
     def __init__(self, d_model: int):
         super().__init__()
@@ -24,6 +25,7 @@ class PeakTokenEmbedding(nn.Module):
         return self.norm(emb)
 
 
+# Bidirectional transformer encoder layer for spectrum tokens.
 class EncoderLayer(nn.Module):
     def __init__(self, d_model, n_head, attention_cls, attn_kwargs,
                  dropout=0.0):
@@ -46,6 +48,7 @@ class EncoderLayer(nn.Module):
         return x + self.ffn(self.norm2(x)), aux
 
 
+# Produces normalized spectrum embeddings for contrastive retrieval.
 class SpectrumEmbeddingTransformer(nn.Module):
     def __init__(self, attention_cls, d_model: int, n_head: int, n_layer: int,
                  attn_kwargs, max_peaks: int = MAX_PEAKS):

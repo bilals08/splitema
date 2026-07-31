@@ -13,6 +13,7 @@ from .utils import (
 )
 
 
+# Compute bidirectional InfoNCE loss with theoretical positives and decoys.
 def _infonce(ee, te, de, temperature):
     B      = ee.size(0)
     labels = torch.arange(B, device=ee.device)
@@ -21,6 +22,7 @@ def _infonce(ee, te, de, temperature):
     return 0.5 * (loss_fwd + loss_bwd)
 
 
+# Evaluate contrastive retrieval loss and top-1 matching accuracy.
 def evaluate_contrastive(model, loader, temperature, eval_batches=None):
     model.eval()
     dev = next(model.parameters()).device
@@ -46,6 +48,7 @@ def evaluate_contrastive(model, loader, temperature, eval_batches=None):
     }
 
 
+# Train one or more spectrum embedding models on the contrastive task.
 def train_and_eval_contrastive_multi(
     model_specs,
     train_ds,
