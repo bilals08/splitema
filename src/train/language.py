@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 import torch
 import torch.nn.functional as F
+from ..attention import SplitEMAAttention, set_split_ema_decay
 from ..config import SEED, device
 from ..models import LMTransformer
 from .utils import _log_weight_stats, generate, safe_name, set_seed
@@ -56,6 +57,10 @@ def train_and_eval_language(
     checkpoint_epochs = set(int(e) for e in checkpoint_epochs)
 
     for epoch in range(cfg.max_epochs):
+        set_split_ema_decay(
+            model,
+            SplitEMAAttention.WARMUP_EMA_DECAY if epoch == 0 else SplitEMAAttention.EMA_DECAY,
+        )
         train_losses = []
         for _ in range(steps_per_epoch):
             x, y = get_batch()

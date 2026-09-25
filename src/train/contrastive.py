@@ -4,6 +4,7 @@ from itertools import cycle
 from pathlib import Path
 import torch
 import torch.nn.functional as F
+from ..attention import SplitEMAAttention, set_split_ema_decay
 from ..config import SEED, device
 from ..data import make_contrastive_loader
 from ..models import SpectrumEmbeddingTransformer
@@ -112,6 +113,9 @@ def train_and_eval_contrastive_multi(
     last_losses = [float("nan")] * n_models
 
     while step < total_steps:
+        if step == steps_per_epoch:
+            for model in models:
+                set_split_ema_decay(model, SplitEMAAttention.EMA_DECAY)
         ep, _, el, tp, tl, dp, dl, _ = next(train_iter)
         ep = ep.to(dev)
         el = el.to(dev)

@@ -4,4 +4,11 @@
 .DS_Store
 *.tmp
 *.pyc
-data/language_data
+/data/
+weights/
+*.h5
+*.pt
+*.pth
+*.ckpt
+*.csv
+*.json

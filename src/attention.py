@@ -64,6 +64,7 @@ class VanillaAttention(nn.Module):
 # Attention variant that splits heads between trainable and EMA key/value paths.
 class SplitEMAAttention(nn.Module):
     EMA_DECAY = 0.99
+    WARMUP_EMA_DECAY = 0.1
 
     def __init__(self, d_model, n_head, diversity_weight=0.1, diversity_power=1):
         super().__init__()
@@ -80,6 +81,9 @@ class SplitEMAAttention(nn.Module):
         self.v_grad = nn.Linear(d_model, gw)
         self.k_ema  = nn.Linear(d_model, gw)
         self.v_ema  = nn.Linear(d_model, gw)
+        self.k_ema.load_state_dict(self.k_grad.state_dict())
+        self.v_ema.load_state_dict(self.v_grad.state_dict())
+        self.ema_decay = self.WARMUP_EMA_DECAY
         for p in (list(self.k_ema.parameters()) +
                   list(self.v_ema.parameters())):
             p.requires_grad_(False)
@@ -90,7 +94,7 @@ class SplitEMAAttention(nn.Module):
         for el, gl in ((self.k_ema, self.k_grad),
                        (self.v_ema, self.v_grad)):
             for pe, pg in zip(el.parameters(), gl.parameters()):
-                pe.data.mul_(self.EMA_DECAY).add_(pg.data, alpha=1 - self.EMA_DECAY)
+                pe.mul_(self.ema_decay).add_(pg, alpha=1 - self.ema_decay)
 
     def forward(self, query, key=None, value=None, causal=False, padding_mask=None):
         key = query if key is None else key
@@ -116,6 +120,12 @@ class SplitEMAAttention(nn.Module):
         else:
             aux = query.new_zeros(1)
         return self.o_proj(torch.cat([grad_out, ema_out], dim=-1)), aux
+
+
+def set_split_ema_decay(model, decay):
+    for module in model.modules():
+        if isinstance(module, SplitEMAAttention):
+            module.ema_decay = decay
 
 
 # Grouped-query attention adapter that shares key/value heads across query heads.
